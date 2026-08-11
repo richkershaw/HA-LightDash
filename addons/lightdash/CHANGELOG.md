@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.19.5 (2026-08-10)
+- **Fixed:** Long-press modals now keep working after navigating between views. View navigation is done with an htmx body swap, but the modal scripts only ran on the initial `DOMContentLoaded` and held stale element references, so after the first navigation the modal silently stopped appearing.
+- **Changed:** `dimmer.js` and `cover.js` rewritten to use document-level event delegation with lazy element lookup. They wire up once and work on every view, and the scripts now render in the view body so htmx re-evaluates them on each swap (a window flag keeps them from wiring twice). `_view_needs_light_dimmer` generalized to `_view_needs_level_modal`.
+- **Added:** Long-press support for **fan** entities — the same brightness-style modal now controls fan speed (`fan.set_percentage`), with an on/off toggle via the icon and a distinct fill colour.
+- **Added:** Long-press **climate modal** (`climate_modal.html` + `climate.js`) — shows current vs target temperature with +/− buttons (`climate.set_temperature`) and HVAC mode buttons built from the entity's `hvac_modes` attribute (`climate.set_hvac_mode`).
+- **Added:** `data-fan-entity` / `data-climate-entity` attributes on tiles and entity rows; `_view_needs_climate_modal` gating.
+- **Changed:** Climate modal CSS and `dimmer-fade`/`dimmer-pop` keyframes added to the base `style.css` (previously only present in the `ha-dark` theme).
+
+## v0.19.4 (2026-08-10)
+- **Fixed:** Long-press dimmer and cover modals now actually display. The modal popups were never shown because the modal HTML markup (`dimmer_modal.html`, `cover_modal.html`) was missing from the repository, so the view only got the dimmer/cover JavaScript and CSS — which bailed out because the `#dimmer-modal` / `#cover-modal` elements it drives did not exist.
+- **Added:** `app/templates/dimmer_modal.html` and `app/templates/cover_modal.html` — the long-press popups with their full set of elements the existing `dimmer.js` / `cover.js` scripts expect (track, fill, name, percentage, close button, and up/stop/down controls for covers). Hidden by default, shown on a half-second press-and-hold on a light, fan, or cover tile/row.
+
+## v0.19.2 (2026-08-09)
+- **Added:** `lightdash.show_toggle` option for `entities` cards — set `show_toggle: false` on the card to hide all row toggle switches, or on an individual row to hide just that toggle. When opted out, the row no longer responds to click-to-toggle either, and the toggle sync script (`st()`) is not injected when no toggles remain in a view.
+- **Changed:** `_render_entities` gates both `_render_entity_toggle` and the row-level click-to-toggle `hx-*` attributes on the new `show_toggle` flag (card-level, overridable per-entity via the row's own `lightdash` block).
+- **Changed:** `_view_needs_toggle_sync` now skips entities cards/rows that opt out via `show_toggle: false`.
+
 ## v0.19.1 (2026-06-28)
 - **Changed:** Alarm panel CSS redesigned — uses theme CSS variables (`--radius`, `--radius-sm`, `--card-bg`, `--card-border`, `--control-bg`, `--control-border`, `--divider`, `--text-faint`, `--accent`) throughout. Centred header with large icon badge (64px) and soft state-colour glow via `drop-shadow` + `color-mix`. Keypad now 3-column classic numpad layout (1-9 + 0/backspace/clear). Action buttons use `--radius-sm` and `--control-border`.
 - **Changed:** Alarm panel header simplified — removed `alarm-info` wrapper, state colour now injected as `--alarm-color` CSS custom property on `.alarm-card`, inherited by badge, state label, disarm button, dot indicators, and code input focus ring.

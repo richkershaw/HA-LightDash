@@ -332,6 +332,17 @@ entities:
 Cover entities automatically get open/stop/close buttons.
 Binary non-cover entities get a toggle switch.
 
+To remove the toggles (and click-to-toggle) from an entities card, set
+`lightdash.show_toggle` to `false` on the card or on an individual row:
+
+```yaml
+type: entities
+entities:
+  - entity: light.kitchen
+    lightdash:
+      show_toggle: false
+```
+
 Light and cover entity rows also accept `lightdash.favourite_values` for
 shortcut buttons in the long-press modal:
 

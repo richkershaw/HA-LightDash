@@ -90,11 +90,13 @@ _TPL_TOGGLE_SYNC = _load_tpl("toggle_sync.js")
 _TPL_SLIDER_SYNC = _load_tpl("slider_sync.js")
 _TPL_DIMMER = _load_tpl("dimmer.js")
 _TPL_COVER = _load_tpl("cover.js")
+_TPL_CLIMATE = _load_tpl("climate.js")
 _TPL_AUTO_REVERT = _load_tpl("auto_revert.js")
 _TPL_ALARM_PANEL = _load_tpl("alarm_panel.js")
 
 _DIMMER_MODAL_HTML = (_TPL_DIR / "dimmer_modal.html").read_text() if (_TPL_DIR / "dimmer_modal.html").exists() else ""
 _COVER_MODAL_HTML = (_TPL_DIR / "cover_modal.html").read_text() if (_TPL_DIR / "cover_modal.html").exists() else ""
+_CLIMATE_MODAL_HTML = (_TPL_DIR / "climate_modal.html").read_text() if (_TPL_DIR / "climate_modal.html").exists() else ""
 
 
 def _url(path: str) -> str:
@@ -162,12 +164,13 @@ def render_view(view: View, dashboard: Dashboard, ha_url: str = "", entity_icons
     if needs_clock or needs_fit_text:
         head_extra += '<script src="' + _url("/static/scripts.js") + '"></script>\n'
     modal_html = ""
+    modal_scripts = ""
     body_script = ""
 
     if dashboard.lightdash.auto_close_modal_seconds > 0:
         body_script += '<script>var _acMs=' + str(dashboard.lightdash.auto_close_modal_seconds * 1000) + ';</script>\n'
 
-    if _view_needs_light_dimmer(view):
+    if _view_needs_level_modal(view):
         auto_close_timer = ""
         auto_close_reset = ""
         if dashboard.lightdash.auto_close_modal_seconds > 0:
@@ -177,7 +180,7 @@ def render_view(view: View, dashboard: Dashboard, ha_url: str = "", entity_icons
             auto_close_reset = "if(typeof _acMs!=='undefined'){clearTimeout(_acTimer);_acTimer=setTimeout(hideDimmer,_acMs)}"
 
         modal_html += _DIMMER_MODAL_HTML
-        head_extra += _TPL_DIMMER.substitute(
+        modal_scripts += _TPL_DIMMER.substitute(
             action_url=_url("/action"),
             state_api_url=_url("/api/state/"),
             auto_close_timer=auto_close_timer,
@@ -194,7 +197,24 @@ def render_view(view: View, dashboard: Dashboard, ha_url: str = "", entity_icons
             auto_close_reset = "if(typeof _acMs!=='undefined'){clearTimeout(_acTimer);_acTimer=setTimeout(hideCover,_acMs)}"
 
         modal_html += _COVER_MODAL_HTML
-        head_extra += _TPL_COVER.substitute(
+        modal_scripts += _TPL_COVER.substitute(
+            action_url=_url("/action"),
+            state_api_url=_url("/api/state/"),
+            auto_close_timer=auto_close_timer,
+            auto_close_reset=auto_close_reset,
+        )
+
+    if _view_needs_climate_modal(view):
+        auto_close_timer = ""
+        auto_close_reset = ""
+        if dashboard.lightdash.auto_close_modal_seconds > 0:
+            auto_close_timer = (
+                "clearTimeout(_acTimer);_acTimer=setTimeout(hideClimate,_acMs);\n"
+            )
+            auto_close_reset = "if(typeof _acMs!=='undefined'){clearTimeout(_acTimer);_acTimer=setTimeout(hideClimate,_acMs)}"
+
+        modal_html += _CLIMATE_MODAL_HTML
+        modal_scripts += _TPL_CLIMATE.substitute(
             action_url=_url("/action"),
             state_api_url=_url("/api/state/"),
             auto_close_timer=auto_close_timer,
@@ -228,6 +248,7 @@ def render_view(view: View, dashboard: Dashboard, ha_url: str = "", entity_icons
         badges=_render_badges(view),
         cards_html=cards_html + "\n",
         modal_html=modal_html,
+        scripts=modal_scripts,
         body_tail=body_tail,
     )
 
@@ -406,26 +427,34 @@ def _view_needs_toggle_sync(view: View) -> bool:
             if _is_binary_domain(eid):
                 return True
         if c.type == "entities":
+            ld_cfg = c.get("lightdash", {}) or {}
+            show_toggle_card = not (isinstance(ld_cfg, dict) and ld_cfg.get("show_toggle") is False)
+            if not show_toggle_card:
+                continue
             for ent in (c.get("entities") or []):
                 eid = ent if isinstance(ent, str) else (ent.get("entity", "") if isinstance(ent, dict) else "")
                 if _is_binary_domain(eid) and eid.split(".")[0] != "cover":
+                    if isinstance(ent, dict):
+                        ent_ld = ent.get("lightdash", {}) or {}
+                        if isinstance(ent_ld, dict) and ent_ld.get("show_toggle") is False:
+                            continue
                     return True
     return False
 
 
-def _view_needs_light_dimmer(view: View) -> bool:
+def _view_needs_level_modal(view: View) -> bool:
     check_cards = view.cards
     if view.sections:
         check_cards = [c for s in view.sections for c in s.cards]
     for c in check_cards:
         if c.type == "tile":
             eid = c.get("entity", "")
-            if eid.split(".")[0] == "light":
+            if eid.split(".")[0] in ("light", "fan"):
                 return True
         if c.type == "entities":
             for ent in (c.get("entities") or []):
                 eid = ent if isinstance(ent, str) else (ent.get("entity", "") if isinstance(ent, dict) else "")
-                if eid.split(".")[0] == "light":
+                if eid.split(".")[0] in ("light", "fan"):
                     return True
     return False
 
@@ -443,6 +472,23 @@ def _view_needs_cover_modal(view: View) -> bool:
             for ent in (c.get("entities") or []):
                 eid = ent if isinstance(ent, str) else (ent.get("entity", "") if isinstance(ent, dict) else "")
                 if eid.split(".")[0] == "cover":
+                    return True
+    return False
+
+
+def _view_needs_climate_modal(view: View) -> bool:
+    check_cards = view.cards
+    if view.sections:
+        check_cards = [c for s in view.sections for c in s.cards]
+    for c in check_cards:
+        if c.type == "tile":
+            eid = c.get("entity", "")
+            if eid.split(".")[0] == "climate":
+                return True
+        if c.type == "entities":
+            for ent in (c.get("entities") or []):
+                eid = ent if isinstance(ent, str) else (ent.get("entity", "") if isinstance(ent, dict) else "")
+                if eid.split(".")[0] == "climate":
                     return True
     return False
 
@@ -1156,6 +1202,8 @@ def _render_entities(card: Card, indent: int = 2) -> str:
     title = html.escape(card.get("title", ""))
     raw_entities = card.get("entities", [])
     rows = ""
+    ld_cfg = card.get("lightdash", {}) or {}
+    show_toggle_card = not (isinstance(ld_cfg, dict) and ld_cfg.get("show_toggle") is False)
     for i, ent in enumerate(raw_entities):
         if isinstance(ent, str):
             eid = ent
@@ -1179,7 +1227,14 @@ def _render_entities(card: Card, indent: int = 2) -> str:
             section = html.escape(ent.get("name", "") if isinstance(ent, dict) else "")
             rows += _SP * (indent + 1) + '<div class="entities-section-header">' + section + '</div>\n'
             continue
-        row_controls = _render_cover_controls(eid, indent + 2) or _render_entity_toggle(eid, indent + 2)
+        show_toggle = show_toggle_card
+        if show_toggle and isinstance(ent, dict):
+            ent_ld = ent.get("lightdash", {}) or {}
+            if isinstance(ent_ld, dict) and ent_ld.get("show_toggle") is False:
+                show_toggle = False
+        row_controls = _render_cover_controls(eid, indent + 2)
+        if show_toggle:
+            row_controls = row_controls or _render_entity_toggle(eid, indent + 2)
         features_html = ""
         if isinstance(ent, dict):
             ent_features = ent.get("features", [])
@@ -1192,8 +1247,12 @@ def _render_entities(card: Card, indent: int = 2) -> str:
         if eid and "." in eid:
             if eid.split(".")[0] == "light":
                 row_attrs["data-light-entity"] = eid
+            elif eid.split(".")[0] == "fan":
+                row_attrs["data-fan-entity"] = eid
             elif eid.split(".")[0] == "cover":
                 row_attrs["data-cover-entity"] = eid
+            elif eid.split(".")[0] == "climate":
+                row_attrs["data-climate-entity"] = eid
         if isinstance(ent, dict):
             ld = ent.get("lightdash", {}) or {}
             if isinstance(ld, dict):
@@ -1202,7 +1261,7 @@ def _render_entities(card: Card, indent: int = 2) -> str:
                     valid = [str(int(v)) for v in fav_vals[:4] if isinstance(v, (int, float)) and 0 <= v <= 100]
                     if valid:
                         row_attrs["data-fav-vals"] = ",".join(valid)
-        if _is_binary_domain(eid) and eid.split(".")[0] != "cover":
+        if show_toggle and _is_binary_domain(eid) and eid.split(".")[0] != "cover":
             dom = eid.split(".")[0]
             svc = _domain_toggle_service(dom)
             row_attrs.update({
@@ -1319,8 +1378,12 @@ def _render_tile(card: Card, indent: int = 2) -> str:
     if eid and "." in eid:
         if eid.split(".")[0] == "light":
             attrs["data-light-entity"] = eid
+        elif eid.split(".")[0] == "fan":
+            attrs["data-fan-entity"] = eid
         elif eid.split(".")[0] == "cover":
             attrs["data-cover-entity"] = eid
+        elif eid.split(".")[0] == "climate":
+            attrs["data-climate-entity"] = eid
     ld = card.get("lightdash", {}) or {}
     if isinstance(ld, dict):
         fav_vals = ld.get("favourite_values", []) or []

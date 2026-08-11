@@ -1048,7 +1048,7 @@ async def config_preview(req: Request):
     # Strip HTMX — preview is static, and HTMX's new URL() throws
     # in srcdoc iframes (document.location.href === "about:srcdoc").
     for tag in (
-        '<script src="https://unpkg.com/htmx.org@2.0.4"></script>',
+        '<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>',
         '<script src="https://unpkg.com/htmx-ext-sse@2.2.4/dist/sse.js"></script>',
     ):
         html_out = html_out.replace(tag + "\n", "", 1)

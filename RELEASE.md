@@ -1,3 +1,27 @@
+# Release Notes for v0.19.5 (2026-08-10)
+
+A fix and a big expansion of the long-press popups: they used to stop working after you changed views, and now they not only keep working everywhere but also cover climate and fan controls, not just lights and covers.
+
+- **Long-press popups no longer break after navigating:** Previously, switching between views made the brightness and shade popups stop appearing until you reloaded the page. They now keep working on every view, no matter how you got there.
+- **Control fans by holding:** Hold a fan tile or row for half a second and a speed slider pops up, pre-filled with the fan's current speed. Tap the fan icon to turn it off (and tap again to turn it back on at the last speed).
+- **New climate popup:** Hold a thermostat tile or row and a popup shows the current room temperature with your target temperature right below it. Use the + and − buttons to nudge the setpoint in half-degree steps, and tap a mode button (Off, Heat, Cool, Auto, etc.) to switch the system. Only the modes your thermostat actually supports are shown.
+- **Consistent everywhere:** The popups work on both tile cards and entity rows, and behave the same across all themes.
+
+# Release Notes for v0.19.4 (2026-08-10)
+
+A bug fix: the press-and-hold brightness and shade-position popups (shown by holding a light or cover tile) were never appearing, even though the feature was documented. LightDash was loading the scripts and styles for these popups, but the popup itself was missing from the package, so nothing was ever shown on screen.
+
+- **Long-press dimmer popup now works:** Hold a light (or fan) tile or row for half a second and the brightness slider pops up, with the current brightness level, ready to drag.
+- **Long-press cover popup now works:** Hold a cover tile or row and the position slider pops up with up/stop/down buttons, pre-filled with the cover's current position.
+- **Nothing else changed** — the popups hide themselves when you press the ✕, and work the same way they always should have.
+
+# Release Notes for v0.19.2 (2026-08-09)
+
+A small quality-of-life change: you can now turn off the on/off toggle switches on an Entities card. LightDash adds a toggle to every light, switch, fan and input_boolean row so you can flip them on or off from the card. If you prefer a cleaner, read-only list — or just don't want a stray tap to turn something on — set `lightdash.show_toggle: false` on the card to hide all the toggles on it, or on a single row to hide just that one.
+
+- **Hide toggle switches on Entities cards:** Add `lightdash: { show_toggle: false }` to any Entities card and every row's toggle switch disappears, and tapping a row no longer flips the entity either. The rows still show the entity's name, icon and current state.
+- **Hide a single toggle:** Put `lightdash: { show_toggle: false }` on just one entity row (e.g. an always-on light you don't want to switch off by accident) while the rest of the card keeps its toggles.
+
 # Release Notes for v0.18.1 (2026-06-28) — v0.19.1 (alarm panel)
 
 A batch of layout fixes, preview improvements, and a new alarm control panel card: the fixed-grid view keeps cards from being squashed, weather cards show up in previews, a draggable divider lets you resize the config panes, and you can now arm and disarm your Alarmo security system directly from a LightDash dashboard.

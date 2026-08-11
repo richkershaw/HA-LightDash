@@ -304,6 +304,22 @@ entities:
 Cover entities automatically get open/stop/close buttons.
 Binary non-cover entities get a toggle switch.
 
+To remove the toggle switches (and the click-to-toggle behaviour) from a card,
+set `lightdash.show_toggle` to `false` on the card, or on an individual row:
+
+```yaml
+type: entities
+title: Lights
+lightdash:
+  show_toggle: false     # hide toggles for the whole card
+entities:
+  - entity: light.kitchen
+  - entity: light.dining_room
+  - entity: fan.bathroom
+    lightdash:
+      show_toggle: false # ...or just for this row
+```
+
 **Additional entity-row options:**
 
 ```yaml
