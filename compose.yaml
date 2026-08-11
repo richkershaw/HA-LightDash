@@ -1,0 +1,10 @@
+services:
+  lightdash:
+    build:
+      context: addons/lightdash
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./dashboards:/app/config
+    ports:
+      - 8000:8000

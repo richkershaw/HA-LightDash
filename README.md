@@ -34,6 +34,14 @@ Installation
 **No manual configuration needed.** Dashboards are managed through the
 in-app editor (see [In-App Editor](#in-app-editor) below).
 
+### Docker Installation
+
+1. Clone git repo and `cd` to it.
+2. Copy `.env.example` to `.env` and edit the values with your HA IP & Port and a Long-Lived Token
+3. Run `docker compose build`
+4. Run `docker compose up -d`
+5. Go to http://[server-ip]:8000 to start setting up dashboards
+
 
 Accessing Dashboards
 --------------------
