@@ -28,6 +28,8 @@ def parse_dashboard(raw: Dict[str, Any]) -> Dashboard:
             container_width=ld.get("container_width", ""),
             container_height=ld.get("container_height", ""),
             theme=ld.get("theme", "ha-dark"),
+            auto_revert_seconds=ld.get("auto_revert_seconds", 0),
+            auto_close_modal_seconds=ld.get("auto_close_modal_seconds", 0),
         )
     for vd in raw_views:
         if not isinstance(vd, dict):
