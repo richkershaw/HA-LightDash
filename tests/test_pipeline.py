@@ -674,6 +674,64 @@ def test_icon_html_with_cache():
     r._ha_url = ""
 
 
+def test_view_icons_include_nested_cards_and_badges():
+    import app.renderer as r
+    from app.parser import parse_dashboard
+
+    raw: Dict[str, Any] = {
+        "views": [
+            {
+                "title": "Nested",
+                "path": "nested",
+                "badges": [
+                    {"type": "shortcut", "icon": "mdi:calendar-today", "label": "Calendar",
+                     "tap_action": {"action": "navigate", "navigation_path": "cal"}},
+                    {"type": "entity", "entity": "script.camera", "icon": "mdi:cctv"},
+                    {"type": "entity", "entity": "light.hall"},
+                ],
+                "sections": [
+                    {
+                        "type": "grid",
+                        "cards": [
+                            {"type": "tile", "entity": "input_boolean.work", "icon": "mdi:desk"},
+                            {
+                                "type": "horizontal-stack",
+                                "cards": [
+                                    {"type": "tile", "entity": "light.ceiling", "icon": "mdi:ceiling-light"},
+                                    {
+                                        "type": "vertical-stack",
+                                        "cards": [
+                                            {"type": "button", "name": "Today", "icon": "mdi:calendar-arrow-right"},
+                                            {"type": "tile", "entity": "switch.fan"},
+                                        ],
+                                    },
+                                ],
+                            },
+                            {
+                                "type": "conditional",
+                                "conditions": [{"entity": "light.hall", "state": "on"}],
+                                "card": {"type": "tile", "entity": "lock.door", "icon": "mdi:door-closed-lock"},
+                            },
+                        ],
+                    }
+                ],
+            }
+        ]
+    }
+    dash = parse_dashboard(raw)
+    r._entity_icons = {}
+    icons = r._view_icons(dash.views[0])
+    r._entity_icons = {}
+    # badges: shortcut icon, entity badge icon, entity badge domain default
+    assert {"calendar-today", "cctv", "lightbulb"} <= icons
+    # top-level card
+    assert "desk" in icons
+    # one and two levels down a stack
+    assert {"ceiling-light", "calendar-arrow-right", "light-switch"} <= icons
+    # the card inside a conditional
+    assert "door-closed-lock" in icons
+
+
 def test_navigate_action_uses_d_url():
     from app.parser import parse_dashboard
     from app.renderer import render_view
