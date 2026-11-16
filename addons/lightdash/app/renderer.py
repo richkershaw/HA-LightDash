@@ -1993,8 +1993,12 @@ def _render_weather_forecast(card: Card, indent: int = 2) -> str:
 
 # ---- Helpers --------------------------------------------------------------
 
-
 def _friendly_name(entity_id: str) -> str:
+    state = _entity_states.get(entity_id, {})
+    attributes = state.get("attributes", {})
+    name = attributes.get("friendly_name")
+    if name:
+        return str(name)
     parts = entity_id.split(".")
     if len(parts) < 2:
         return entity_id
