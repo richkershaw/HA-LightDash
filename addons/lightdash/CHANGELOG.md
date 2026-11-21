@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.19.2 (2026-10-26)
+- **Fixed:** Icons of cards nested in `horizontal-stack`, `vertical-stack`, `grid` and `conditional` cards, and of view badges, were never prefetched — `_prefetch_icons` only walked the top-level cards of a view, and `_icon_html` renders nothing for an icon missing from `_icon_svg_cache`, so those tiles, buttons and badges rendered with an empty icon box. Icon collection moved into `_collect_card_icons` (recursive over container cards) and `_view_icons` (badges + cards); `_prefetch_icons` now fetches that set.
+- **Added:** `test_view_icons_include_nested_cards_and_badges` covering badges, stacks two levels deep and a conditional's child card.
+
 ## v0.19.1 (2026-06-28)
 - **Changed:** Alarm panel CSS redesigned — uses theme CSS variables (`--radius`, `--radius-sm`, `--card-bg`, `--card-border`, `--control-bg`, `--control-border`, `--divider`, `--text-faint`, `--accent`) throughout. Centred header with large icon badge (64px) and soft state-colour glow via `drop-shadow` + `color-mix`. Keypad now 3-column classic numpad layout (1-9 + 0/backspace/clear). Action buttons use `--radius-sm` and `--control-border`.
 - **Changed:** Alarm panel header simplified — removed `alarm-info` wrapper, state colour now injected as `--alarm-color` CSS custom property on `.alarm-card`, inherited by badge, state label, disarm button, dot indicators, and code input focus ring.

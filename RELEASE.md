@@ -1,3 +1,9 @@
+# Release Notes for v0.19.2 (2026-10-26)
+
+A small fix for missing icons.
+
+- **Icons inside stacks and on badges now show up:** Tiles and buttons placed inside a `horizontal-stack`, `vertical-stack`, `grid` or `conditional` card, and the icons of view badges, were rendered with an empty icon box unless the same icon happened to be used by a top-level card somewhere. They are now fetched like every other icon.
+
 # Release Notes for v0.18.1 (2026-06-28) — v0.19.1 (alarm panel)
 
 A batch of layout fixes, preview improvements, and a new alarm control panel card: the fixed-grid view keeps cards from being squashed, weather cards show up in previews, a draggable divider lets you resize the config panes, and you can now arm and disarm your Alarmo security system directly from a LightDash dashboard.

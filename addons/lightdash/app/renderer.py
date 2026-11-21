@@ -679,12 +679,15 @@ def _entity_span(entity_id: str, card_id: str = "", indent: int = 0) -> str:
     return _h("span", attrs, html.escape(display) if display is not None else "", indent)
 
 
-def _prefetch_icons(view: View) -> None:
-    needed = set()
-    check_cards = view.cards
-    if view.sections:
-        check_cards = [c for s in view.sections for c in s.cards]
-    for c in check_cards:
+def _card_from_raw(raw: dict) -> Card:
+    return Card(type=raw.get("type", ""), config={k: v for k, v in raw.items() if k != "type"})
+
+
+def _collect_card_icons(cards, needed: set) -> None:
+    """Add the MDI icon names `cards` render to `needed`, descending into
+    container cards (grid, horizontal-stack, vertical-stack, conditional)
+    so that nested tiles and buttons are prefetched too."""
+    for c in cards:
         eid = c.get("entity", "")
         icon = _entity_icon(eid, c.get("icon", ""))
         if icon:
@@ -712,6 +715,37 @@ def _prefetch_icons(view: View) -> None:
                 resolved = _entity_icon(eeid, eicon)
                 if resolved:
                     needed.add(resolved.removeprefix("mdi:"))
+        if c.type in ("grid", "horizontal-stack", "vertical-stack"):
+            children = [_card_from_raw(r) for r in (c.get("cards") or []) if isinstance(r, dict)]
+            _collect_card_icons(children, needed)
+        if c.type == "conditional":
+            raw_child = c.get("card")
+            if isinstance(raw_child, dict):
+                _collect_card_icons([_card_from_raw(raw_child)], needed)
+
+
+def _view_icons(view: View) -> set:
+    """Every MDI icon name the view's badges and cards will render."""
+    needed: set = set()
+    for badge in view.badges or []:
+        if not isinstance(badge, dict):
+            continue
+        btype = badge.get("type", "entity")
+        if btype == "shortcut":
+            icon = badge.get("icon", "")
+        else:
+            icon = _entity_icon(badge.get("entity", ""), badge.get("icon", ""))
+        if icon:
+            needed.add(icon.removeprefix("mdi:"))
+    check_cards = view.cards
+    if view.sections:
+        check_cards = [c for s in view.sections for c in s.cards]
+    _collect_card_icons(check_cards, needed)
+    return needed
+
+
+def _prefetch_icons(view: View) -> None:
+    needed = _view_icons(view)
     uncached = [n for n in needed if n not in _icon_svg_cache]
     if not uncached or not _ha_url:
         return
